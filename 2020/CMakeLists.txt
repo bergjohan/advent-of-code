@@ -14,3 +14,13 @@ target_compile_options(common INTERFACE
 
 add_executable(day01 day01.c)
 target_link_libraries(day01 PRIVATE common)
+
+add_executable(day02 day02.c)
+target_link_libraries(day02 PRIVATE common)
+
+add_custom_command(TARGET day02
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy
+  ${CMAKE_SOURCE_DIR}/input02.txt
+  ${CMAKE_BINARY_DIR}/input02.txt
+)
