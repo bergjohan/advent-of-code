@@ -101,8 +101,7 @@ void next_token(void) {
         }
         break;
     default:
-        fprintf(stderr, "invalid token");
-        exit(1);
+        aoc_die("invalid token\n");
     }
 }
 
@@ -110,8 +109,7 @@ void expect(Token_kind kind) {
     if (token.kind == kind) {
         next_token();
     } else {
-        fprintf(stderr, "unexpected token");
-        exit(1);
+        aoc_die("unexpected token\n");
     }
 }
 
@@ -123,26 +121,35 @@ int parse(bool (*valid_password)(int, int, char)) {
 
     next_token();
     while (token.kind != TOK_EOF) {
-        if (token.kind == TOK_NUMBER) {
-            i = token.num;
+        if (token.kind != TOK_NUMBER) {
+            aoc_die("expected number\n");
         }
-        expect(TOK_NUMBER);
+        i = token.num;
+        next_token();
+
         expect(TOK_DASH);
-        if (token.kind == TOK_NUMBER) {
-            j = token.num;
+
+        if (token.kind != TOK_NUMBER) {
+            aoc_die("expected number\n");
         }
-        expect(TOK_NUMBER);
-        if (token.kind == TOK_CHAR) {
-            c = token.c;
+        j = token.num;
+        next_token();
+
+        if (token.kind != TOK_CHAR) {
+            aoc_die("expected char\n");
         }
-        expect(TOK_CHAR);
+        c = token.c;
+        next_token();
+
         expect(TOK_COLON);
-        if (token.kind == TOK_STRING) {
-            if (valid_password(i, j, c)) {
-                num_valid++;
-            }
+
+        if (token.kind != TOK_STRING) {
+            aoc_die("expected string\n");
         }
-        expect(TOK_STRING);
+        if (valid_password(i, j, c)) {
+            num_valid++;
+        }
+        next_token();
     }
     return num_valid;
 }
@@ -162,7 +169,7 @@ bool part2(int i, int j, char c) {
 }
 
 int main(void) {
-    char *tmp = read_input("input02.txt");
+    char *tmp = aoc_read_input("input02.txt");
     buffer = tmp;
     printf("%d\n", parse(part1));
     buffer = tmp;
