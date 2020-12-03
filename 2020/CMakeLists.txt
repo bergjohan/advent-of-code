@@ -24,3 +24,6 @@ add_custom_command(TARGET day02
   ${CMAKE_SOURCE_DIR}/input02.txt
   ${CMAKE_BINARY_DIR}/input02.txt
 )
+
+add_executable(day03 day03.c)
+target_link_libraries(day03 PRIVATE common)
