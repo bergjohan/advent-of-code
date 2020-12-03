@@ -3,6 +3,7 @@
 #include <string.h>
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define LINE_LEN 31
 
 uint64_t check_slope(const char *input[], size_t size, size_t right,
                      size_t down) {
@@ -11,7 +12,7 @@ uint64_t check_slope(const char *input[], size_t size, size_t right,
 
     for (size_t i = down; i < size; i += down) {
         const char *p = input[i];
-        j = (j + right) % strlen(p);
+        j = (j + right) % LINE_LEN;
         if (p[j] == '#') {
             num_trees++;
         }
