@@ -30,6 +30,9 @@ char *aoc_read_input(const char *filename) {
     long size = ftell(fp);
     rewind(fp);
     char *ret = malloc((size_t)size + 1);
+    if (!ret) {
+        aoc_die("malloc() failed\n");
+    }
     fread(ret, 1, (size_t)size, fp);
     ret[size] = '\0';
     fclose(fp);
