@@ -47,3 +47,14 @@ add_custom_command(TARGET day06
   ${CMAKE_SOURCE_DIR}/input06.txt
   ${CMAKE_BINARY_DIR}/input06.txt
 )
+
+add_executable(day07 day07.c)
+target_include_directories(day07 SYSTEM PRIVATE stb)
+target_link_libraries(day07 PRIVATE common)
+
+add_custom_command(TARGET day07
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy
+  ${CMAKE_SOURCE_DIR}/input07.txt
+  ${CMAKE_BINARY_DIR}/input07.txt
+)
