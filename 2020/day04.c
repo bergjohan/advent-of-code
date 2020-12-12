@@ -213,7 +213,7 @@ Result solution(void) {
     return res;
 }
 
-void init_map(void) {
+void init_tokens(void) {
     map_insert(&map, "byr", 3, (void *)TOKEN_BYR);
     map_insert(&map, "iyr", 3, (void *)TOKEN_IYR);
     map_insert(&map, "eyr", 3, (void *)TOKEN_EYR);
@@ -241,7 +241,7 @@ int main(int argc, char **argv) {
     }
     char *input = read_input(argv[1]);
     buffer = input;
-    init_map();
+    init_tokens();
     Result res = solution();
     printf("%d\n%d\n", res.part1, res.part2);
     free(input);

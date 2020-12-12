@@ -26,14 +26,6 @@ const char *buffer;
 Token token;
 Map map;
 
-void init_tokens(void) {
-    map_insert(&map, "bag", 3, (void *)TOKEN_BAG);
-    map_insert(&map, "bags", 4, (void *)TOKEN_BAG);
-    map_insert(&map, "contain", 7, (void *)TOKEN_CONTAIN);
-    map_insert(&map, "no", 2, (void *)TOKEN_NO);
-    map_insert(&map, "other", 5, (void *)TOKEN_OTHER);
-}
-
 void next_token(void) {
 next:
     token.start = buffer;
@@ -97,6 +89,14 @@ void expect(Token_kind kind) {
     }
 }
 
+void init_tokens(void) {
+    map_insert(&map, "bag", 3, (void *)TOKEN_BAG);
+    map_insert(&map, "bags", 4, (void *)TOKEN_BAG);
+    map_insert(&map, "contain", 7, (void *)TOKEN_CONTAIN);
+    map_insert(&map, "no", 2, (void *)TOKEN_NO);
+    map_insert(&map, "other", 5, (void *)TOKEN_OTHER);
+}
+
 typedef struct Edge {
     struct Node *node;
     int num;
@@ -125,29 +125,7 @@ void add_edge(const char *key1, size_t size1, const char *key2, size_t size2,
     sb_push(node1->edges, edge);
 }
 
-bool contain_shiny_gold(Node *node) {
-    for (int i = 0; i < sb_count(node->edges); i++) {
-        Node *n = node->edges[i].node;
-        if (n == shiny_gold) {
-            return true;
-        }
-        if (contain_shiny_gold(n)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-int count_bags(Node *node) {
-    int count = 0;
-    for (int i = 0; i < sb_count(node->edges); i++) {
-        Node *n = node->edges[i].node;
-        count += node->edges[i].num + node->edges[i].num * count_bags(n);
-    }
-    return count;
-}
-
-void solution(void) {
+void build_graph(void) {
     next_token();
     while (token.kind != TOKEN_EOF) {
         const char *start = token.start;
@@ -182,6 +160,22 @@ void solution(void) {
     }
 
     shiny_gold = map_find(&nodes, "shiny gold", 10);
+}
+
+bool contain_shiny_gold(Node *node) {
+    for (int i = 0; i < sb_count(node->edges); i++) {
+        Node *n = node->edges[i].node;
+        if (n == shiny_gold) {
+            return true;
+        }
+        if (contain_shiny_gold(n)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int part1(void) {
     int count = 0;
     for (int i = 0; i < MAP_SIZE; i++) {
         if (nodes.keys[i][0] != '\0') {
@@ -190,8 +184,20 @@ void solution(void) {
             }
         }
     }
-    printf("%d\n", count);
-    printf("%d\n", count_bags(shiny_gold));
+    return count;
+}
+
+int count_bags(Node *node) {
+    int count = 0;
+    for (int i = 0; i < sb_count(node->edges); i++) {
+        Node *n = node->edges[i].node;
+        count += node->edges[i].num + node->edges[i].num * count_bags(n);
+    }
+    return count;
+}
+
+int part2(void) {
+    return count_bags(shiny_gold);
 }
 
 int main(int argc, char **argv) {
@@ -202,6 +208,8 @@ int main(int argc, char **argv) {
     char *input = read_input(argv[1]);
     buffer = input;
     init_tokens();
-    solution();
+    build_graph();
+    printf("%d\n", part1());
+    printf("%d\n", part2());
     free(input);
 }
