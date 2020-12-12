@@ -1,6 +1,4 @@
-#include <stdio.h>
-
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#include "common.h"
 
 int part1(int *input, size_t size) {
     for (size_t i = 0; i < size; i++) {

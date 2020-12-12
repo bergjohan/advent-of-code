@@ -1,7 +1,4 @@
-#include <inttypes.h>
-#include <stdio.h>
-
-#include "aoc_common.h"
+#include "common.h"
 
 int part2(const char *input) {
     uint32_t answers = 0;
@@ -48,8 +45,12 @@ int part1(const char *input) {
     return sum;
 }
 
-int main(void) {
-    char *input = aoc_read_input("input06.txt");
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s [FILE]\n", argv[0]);
+        exit(1);
+    }
+    char *input = read_input(argv[1]);
     printf("%d\n", part1(input));
     printf("%d\n", part2(input));
     free(input);

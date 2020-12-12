@@ -1,44 +1,40 @@
 #include <ctype.h>
 #include <stdbool.h>
-#include <stdio.h>
 
-#include "aoc_common.h"
+#include "common.h"
 
 typedef enum Token_kind {
-    TOK_EOF,
-    TOK_NUMBER,
-    TOK_DASH,
-    TOK_COLON,
-    TOK_CHAR,
-    TOK_STRING
+    TOKEN_EOF,
+    TOKEN_NUMBER,
+    TOKEN_DASH,
+    TOKEN_COLON,
+    TOKEN_STRING,
+    TOKEN_CHAR,
 } Token_kind;
 
-typedef struct String {
-    const char *text;
-    size_t size;
-} String;
-
 typedef struct Token {
+    const char *start;
+    size_t len;
     Token_kind kind;
-    union {
-        String str;
-        char c;
-        int num;
-    };
 } Token;
 
 const char *buffer;
 Token token;
 
 void next_token(void) {
-    while (isspace(*buffer)) {
-        buffer++;
-    }
+next:
+    token.start = buffer;
 
     switch (*buffer) {
     case 0:
-        token.kind = TOK_EOF;
+        token.kind = TOKEN_EOF;
         break;
+    case '\n':
+    case ' ':
+        while (isspace(*buffer)) {
+            buffer++;
+        }
+        goto next;
     case '0':
     case '1':
     case '2':
@@ -49,18 +45,17 @@ void next_token(void) {
     case '7':
     case '8':
     case '9':
-        token.kind = TOK_NUMBER;
-        token.num = atoi(buffer);
+        token.kind = TOKEN_NUMBER;
         while (isdigit(*buffer)) {
             buffer++;
         }
         break;
     case '-':
-        token.kind = TOK_DASH;
+        token.kind = TOKEN_DASH;
         buffer++;
         break;
     case ':':
-        token.kind = TOK_COLON;
+        token.kind = TOKEN_COLON;
         buffer++;
         break;
     case 'a':
@@ -89,62 +84,58 @@ void next_token(void) {
     case 'x':
     case 'y':
     case 'z':
-        token.kind = TOK_STRING;
-        token.str.text = buffer;
+        token.kind = TOKEN_STRING;
         while (islower(*buffer)) {
             buffer++;
         }
-        token.str.size = (size_t)(buffer - token.str.text);
-        if (token.str.size == 1) {
-            token.c = *token.str.text;
-            token.kind = TOK_CHAR;
+        if ((buffer - token.start) == 1) {
+            token.kind = TOKEN_CHAR;
         }
         break;
     default:
-        aoc_die("invalid token\n");
+        die("invalid token\n");
     }
+
+    token.len = (size_t)(buffer - token.start);
 }
 
 void expect(Token_kind kind) {
     if (token.kind == kind) {
         next_token();
     } else {
-        aoc_die("unexpected token\n");
+        die("unexpected token\n");
     }
 }
 
 int parse(bool (*valid_password)(int, int, char)) {
-    int i;
-    int j;
-    char c;
     int num_valid = 0;
 
     next_token();
-    while (token.kind != TOK_EOF) {
-        if (token.kind != TOK_NUMBER) {
-            aoc_die("expected number\n");
+    while (token.kind != TOKEN_EOF) {
+        if (token.kind != TOKEN_NUMBER) {
+            die("expected number\n");
         }
-        i = token.num;
+        int i = atoi(token.start);
         next_token();
 
-        expect(TOK_DASH);
+        expect(TOKEN_DASH);
 
-        if (token.kind != TOK_NUMBER) {
-            aoc_die("expected number\n");
+        if (token.kind != TOKEN_NUMBER) {
+            die("expected number\n");
         }
-        j = token.num;
+        int j = atoi(token.start);
         next_token();
 
-        if (token.kind != TOK_CHAR) {
-            aoc_die("expected char\n");
+        if (token.kind != TOKEN_CHAR) {
+            die("expected char\n");
         }
-        c = token.c;
+        char c = *token.start;
         next_token();
 
-        expect(TOK_COLON);
+        expect(TOKEN_COLON);
 
-        if (token.kind != TOK_STRING) {
-            aoc_die("expected string\n");
+        if (token.kind != TOKEN_STRING) {
+            die("expected string\n");
         }
         if (valid_password(i, j, c)) {
             num_valid++;
@@ -156,8 +147,8 @@ int parse(bool (*valid_password)(int, int, char)) {
 
 bool part1(int low, int high, char c) {
     int count = 0;
-    for (size_t i = 0; i < token.str.size; i++) {
-        if (token.str.text[i] == c) {
+    for (size_t i = 0; i < token.len; i++) {
+        if (token.start[i] == c) {
             count++;
         }
     }
@@ -165,14 +156,18 @@ bool part1(int low, int high, char c) {
 }
 
 bool part2(int i, int j, char c) {
-    return (token.str.text[i - 1] == c) ^ (token.str.text[j - 1] == c);
+    return (token.start[i - 1] == c) ^ (token.start[j - 1] == c);
 }
 
-int main(void) {
-    char *tmp = aoc_read_input("input02.txt");
-    buffer = tmp;
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s [FILE]\n", argv[0]);
+        exit(1);
+    }
+    char *input = read_input("input02.txt");
+    buffer = input;
     printf("%d\n", parse(part1));
-    buffer = tmp;
+    buffer = input;
     printf("%d\n", parse(part2));
-    free(tmp);
+    free(input);
 }

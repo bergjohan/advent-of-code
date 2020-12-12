@@ -1,8 +1,5 @@
-#include <inttypes.h>
-#include <stdio.h>
-#include <string.h>
+#include "common.h"
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define LINE_LEN 31
 
 uint64_t check_slope(const char *input[], size_t size, size_t right,

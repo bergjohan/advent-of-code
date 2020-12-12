@@ -17,7 +17,6 @@ target_link_libraries(day01 PRIVATE common)
 
 add_executable(day02 day02.c)
 target_link_libraries(day02 PRIVATE common)
-
 add_custom_command(TARGET day02
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy
@@ -30,7 +29,6 @@ target_link_libraries(day03 PRIVATE common)
 
 add_executable(day04 day04.c)
 target_link_libraries(day04 PRIVATE common)
-
 add_custom_command(TARGET day04
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy
@@ -40,7 +38,6 @@ add_custom_command(TARGET day04
 
 add_executable(day06 day06.c)
 target_link_libraries(day06 PRIVATE common)
-
 add_custom_command(TARGET day06
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy
@@ -51,7 +48,6 @@ add_custom_command(TARGET day06
 add_executable(day07 day07.c)
 target_include_directories(day07 SYSTEM PRIVATE stb)
 target_link_libraries(day07 PRIVATE common)
-
 add_custom_command(TARGET day07
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy

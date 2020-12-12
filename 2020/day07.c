@@ -1,22 +1,19 @@
 #include <ctype.h>
-#include <inttypes.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
 
-#include "aoc_common.h"
+#include "common.h"
 #include "stretchy_buffer.h"
 
 typedef enum Token_kind {
-    TOK_UNKNOWN,
-    TOK_EOF,
-    TOK_COMMA,
-    TOK_PERIOD,
-    TOK_NUMBER,
-    TOK_BAG,
-    TOK_CONTAIN,
-    TOK_NO,
-    TOK_OTHER,
+    TOKEN_UNKNOWN,
+    TOKEN_EOF,
+    TOKEN_COMMA,
+    TOKEN_PERIOD,
+    TOKEN_NUMBER,
+    TOKEN_BAG,
+    TOKEN_CONTAIN,
+    TOKEN_NO,
+    TOKEN_OTHER,
 } Token_kind;
 
 typedef struct Token {
@@ -25,64 +22,16 @@ typedef struct Token {
     Token_kind kind;
 } Token;
 
-#define MAP_SIZE 1024
-typedef char Key[32];
-
-typedef struct Map {
-    Key keys[MAP_SIZE];
-    void *values[MAP_SIZE];
-} Map;
-
 const char *buffer;
 Token token;
 Map map;
 
-uint32_t hash(const char *str, size_t size) {
-    const unsigned char *s = (const unsigned char *)str;
-    uint32_t hash = 0x811c9dc5;
-
-    for (size_t i = 0; i < size; i++) {
-        hash ^= s[i];
-        hash *= 0x01000193;
-    }
-    return hash;
-}
-
-void map_insert(Map *map, const char *key, size_t size, void *value) {
-    uint32_t i = hash(key, size);
-
-    for (;;) {
-        i &= MAP_SIZE - 1;
-        if (map->keys[i][0] == 0) {
-            memcpy(map->keys[i], key, size);
-            map->values[i] = value;
-            return;
-        }
-        i++;
-    }
-}
-
-void *map_find(Map *map, const char *key, size_t size) {
-    uint32_t i = hash(key, size);
-
-    for (;;) {
-        i &= MAP_SIZE - 1;
-        if (strlen(map->keys[i]) == size &&
-            strncmp(key, map->keys[i], size) == 0) {
-            return map->values[i];
-        } else if (strlen(map->keys[i]) == 0) {
-            return NULL;
-        }
-        i++;
-    }
-}
-
 void init_tokens(void) {
-    map_insert(&map, "bag", 3, (void *)TOK_BAG);
-    map_insert(&map, "bags", 4, (void *)TOK_BAG);
-    map_insert(&map, "contain", 7, (void *)TOK_CONTAIN);
-    map_insert(&map, "no", 2, (void *)TOK_NO);
-    map_insert(&map, "other", 5, (void *)TOK_OTHER);
+    map_insert(&map, "bag", 3, (void *)TOKEN_BAG);
+    map_insert(&map, "bags", 4, (void *)TOKEN_BAG);
+    map_insert(&map, "contain", 7, (void *)TOKEN_CONTAIN);
+    map_insert(&map, "no", 2, (void *)TOKEN_NO);
+    map_insert(&map, "other", 5, (void *)TOKEN_OTHER);
 }
 
 void next_token(void) {
@@ -91,18 +40,20 @@ next:
 
     switch (*buffer) {
     case 0:
-        token.kind = TOK_EOF;
+        token.kind = TOKEN_EOF;
         break;
-    case ' ':
     case '\n':
-        buffer++;
+    case ' ':
+        while (isspace(*buffer)) {
+            buffer++;
+        }
         goto next;
     case ',':
-        token.kind = TOK_COMMA;
+        token.kind = TOKEN_COMMA;
         buffer++;
         break;
     case '.':
-        token.kind = TOK_PERIOD;
+        token.kind = TOKEN_PERIOD;
         buffer++;
         break;
     case '0':
@@ -115,10 +66,10 @@ next:
     case '7':
     case '8':
     case '9':
+        token.kind = TOKEN_NUMBER;
         while (isdigit(*buffer)) {
             buffer++;
         }
-        token.kind = TOK_NUMBER;
         break;
     default:
         while (isalpha(*buffer)) {
@@ -142,15 +93,12 @@ void expect(Token_kind kind) {
     if (token.kind == kind) {
         next_token();
     } else {
-        aoc_die("unexpected token\n");
+        die("unexpected token\n");
     }
 }
 
-Map nodes;
-
 typedef struct Edge {
-    const char *key;
-    size_t size;
+    struct Node *node;
     int num;
 } Edge;
 
@@ -158,6 +106,7 @@ typedef struct Node {
     Edge *edges;
 } Node;
 
+Map nodes;
 Node *shiny_gold;
 
 void add_node(const char *key, size_t size) {
@@ -171,13 +120,14 @@ void add_node(const char *key, size_t size) {
 void add_edge(const char *key1, size_t size1, const char *key2, size_t size2,
               int num) {
     Node *node1 = map_find(&nodes, key1, size1);
-    Edge edge = {key2, size2, num};
+    Node *node2 = map_find(&nodes, key2, size2);
+    Edge edge = {node2, num};
     sb_push(node1->edges, edge);
 }
 
 bool contain_shiny_gold(Node *node) {
     for (int i = 0; i < sb_count(node->edges); i++) {
-        Node *n = map_find(&nodes, node->edges[i].key, node->edges[i].size);
+        Node *n = node->edges[i].node;
         if (n == shiny_gold) {
             return true;
         }
@@ -191,7 +141,7 @@ bool contain_shiny_gold(Node *node) {
 int count_bags(Node *node) {
     int count = 0;
     for (int i = 0; i < sb_count(node->edges); i++) {
-        Node *n = map_find(&nodes, node->edges[i].key, node->edges[i].size);
+        Node *n = node->edges[i].node;
         count += node->edges[i].num + node->edges[i].num * count_bags(n);
     }
     return count;
@@ -199,36 +149,36 @@ int count_bags(Node *node) {
 
 void solution(void) {
     next_token();
-    while (token.kind != TOK_EOF) {
+    while (token.kind != TOKEN_EOF) {
         const char *start = token.start;
         size_t size = token.size;
         add_node(token.start, token.size);
         next_token();
-        expect(TOK_BAG);
-        expect(TOK_CONTAIN);
-        if (token.kind == TOK_NO) {
+        expect(TOKEN_BAG);
+        expect(TOKEN_CONTAIN);
+        if (token.kind == TOKEN_NO) {
             next_token();
-            expect(TOK_OTHER);
-            expect(TOK_BAG);
-            expect(TOK_PERIOD);
+            expect(TOKEN_OTHER);
+            expect(TOKEN_BAG);
+            expect(TOKEN_PERIOD);
             continue;
         }
         int num = atoi(token.start);
-        expect(TOK_NUMBER);
+        expect(TOKEN_NUMBER);
         add_node(token.start, token.size);
         add_edge(start, size, token.start, token.size, num);
         next_token();
-        expect(TOK_BAG);
-        while (token.kind == TOK_COMMA) {
+        expect(TOKEN_BAG);
+        while (token.kind == TOKEN_COMMA) {
             next_token();
             int num = atoi(token.start);
-            expect(TOK_NUMBER);
+            expect(TOKEN_NUMBER);
             add_node(token.start, token.size);
             add_edge(start, size, token.start, token.size, num);
             next_token();
-            expect(TOK_BAG);
+            expect(TOKEN_BAG);
         }
-        expect(TOK_PERIOD);
+        expect(TOKEN_PERIOD);
     }
 
     shiny_gold = map_find(&nodes, "shiny gold", 10);
@@ -244,8 +194,12 @@ void solution(void) {
     printf("%d\n", count_bags(shiny_gold));
 }
 
-int main(void) {
-    char *input = aoc_read_input("input07.txt");
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s [FILE]\n", argv[0]);
+        exit(1);
+    }
+    char *input = read_input(argv[1]);
     buffer = input;
     init_tokens();
     solution();
