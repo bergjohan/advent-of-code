@@ -26,6 +26,11 @@ int part2(int *input, size_t size) {
     return -1;
 }
 
+void solution(int *input, size_t size) {
+    printf("%d\n", part1(input, size));
+    printf("%d\n", part2(input, size));
+}
+
 int main(void) {
     int input[] = {
         1863, 1750, 1767, 1986, 1180, 1719, 1946, 1866, 1939, 1771, 1766, 1941,
@@ -45,6 +50,5 @@ int main(void) {
         1125, 1973, 1790, 467,  1804, 987,  1944, 2001, 1895, 1917, 1218, 1147,
         1884, 1819, 1179, 1859, 620,  1219, 2008, 1871, 1852, 1263, 1751, 1989,
         1381, 1250, 1754, 1725, 1665, 1352, 1805, 1325};
-    printf("%d\n", part1(input, ARRAY_SIZE(input)));
-    printf("%d\n", part2(input, ARRAY_SIZE(input)));
+    solution(input, ARRAY_SIZE(input));
 }

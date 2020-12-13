@@ -45,13 +45,17 @@ int part1(const char *input) {
     return sum;
 }
 
+void solution(const char *input) {
+    printf("%d\n", part1(input));
+    printf("%d\n", part2(input));
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         fprintf(stderr, "Usage: %s [FILE]\n", argv[0]);
         exit(1);
     }
     char *input = read_input(argv[1]);
-    printf("%d\n", part1(input));
-    printf("%d\n", part2(input));
+    solution(input);
     free(input);
 }

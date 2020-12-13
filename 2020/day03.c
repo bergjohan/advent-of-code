@@ -29,6 +29,11 @@ uint64_t part2(const char *input[], size_t size) {
            check_slope(input, size, 1, 2);
 }
 
+void solution(const char *input[], size_t size) {
+    printf("%lu\n", part1(input, size));
+    printf("%lu\n", part2(input, size));
+}
+
 int main(void) {
     const char *input[] = {
         ".........#..##.##..............",
@@ -355,6 +360,5 @@ int main(void) {
         "..#.#...#....#....##..#...##...",
         ".##..#..#..##....##...#........"
     };
-    printf("%lu\n", part1(input, ARRAY_SIZE(input)));
-    printf("%lu\n", part2(input, ARRAY_SIZE(input)));
+    solution(input, ARRAY_SIZE(input));
 }

@@ -18,7 +18,7 @@ typedef enum Token_kind {
 
 typedef struct Token {
     const char *start;
-    size_t size;
+    const char *end;
     Token_kind kind;
 } Token;
 
@@ -67,7 +67,7 @@ next:
         while (isalpha(*buffer)) {
             buffer++;
         }
-        void *ret = map_find(&map, token.start, (size_t)(buffer - token.start));
+        void *ret = map_find_range(&map, token.start, buffer);
         if (!ret) {
             buffer++;
             while (isalpha(*buffer)) {
@@ -78,7 +78,7 @@ next:
         break;
     }
 
-    token.size = (size_t)(buffer - token.start);
+    token.end = buffer;
 }
 
 void expect(Token_kind kind) {
@@ -90,11 +90,11 @@ void expect(Token_kind kind) {
 }
 
 void init_tokens(void) {
-    map_insert(&map, "bag", 3, (void *)TOKEN_BAG);
-    map_insert(&map, "bags", 4, (void *)TOKEN_BAG);
-    map_insert(&map, "contain", 7, (void *)TOKEN_CONTAIN);
-    map_insert(&map, "no", 2, (void *)TOKEN_NO);
-    map_insert(&map, "other", 5, (void *)TOKEN_OTHER);
+    map_insert(&map, "bag", (void *)TOKEN_BAG);
+    map_insert(&map, "bags", (void *)TOKEN_BAG);
+    map_insert(&map, "contain", (void *)TOKEN_CONTAIN);
+    map_insert(&map, "no", (void *)TOKEN_NO);
+    map_insert(&map, "other", (void *)TOKEN_OTHER);
 }
 
 typedef struct Edge {
@@ -109,18 +109,18 @@ typedef struct Node {
 Map nodes;
 Node *shiny_gold;
 
-void add_node(const char *key, size_t size) {
-    if (!map_find(&nodes, key, size)) {
+void add_node(const char *start, const char *end) {
+    if (!map_find_range(&nodes, start, end)) {
         Node *node = malloc(sizeof(*node));
         node->edges = NULL;
-        map_insert(&nodes, key, size, node);
+        map_insert_range(&nodes, start, end, node);
     }
 }
 
-void add_edge(const char *key1, size_t size1, const char *key2, size_t size2,
-              int num) {
-    Node *node1 = map_find(&nodes, key1, size1);
-    Node *node2 = map_find(&nodes, key2, size2);
+void add_edge(const char *start1, const char *end1, const char *start2,
+              const char *end2, int num) {
+    Node *node1 = map_find_range(&nodes, start1, end1);
+    Node *node2 = map_find_range(&nodes, start2, end2);
     Edge edge = {node2, num};
     sb_push(node1->edges, edge);
 }
@@ -129,8 +129,8 @@ void build_graph(void) {
     next_token();
     while (token.kind != TOKEN_EOF) {
         const char *start = token.start;
-        size_t size = token.size;
-        add_node(token.start, token.size);
+        const char *end = token.end;
+        add_node(token.start, token.end);
         next_token();
         expect(TOKEN_BAG);
         expect(TOKEN_CONTAIN);
@@ -143,23 +143,23 @@ void build_graph(void) {
         }
         int num = atoi(token.start);
         expect(TOKEN_NUMBER);
-        add_node(token.start, token.size);
-        add_edge(start, size, token.start, token.size, num);
+        add_node(token.start, token.end);
+        add_edge(start, end, token.start, token.end, num);
         next_token();
         expect(TOKEN_BAG);
         while (token.kind == TOKEN_COMMA) {
             next_token();
             int num = atoi(token.start);
             expect(TOKEN_NUMBER);
-            add_node(token.start, token.size);
-            add_edge(start, size, token.start, token.size, num);
+            add_node(token.start, token.end);
+            add_edge(start, end, token.start, token.end, num);
             next_token();
             expect(TOKEN_BAG);
         }
         expect(TOKEN_PERIOD);
     }
 
-    shiny_gold = map_find(&nodes, "shiny gold", 10);
+    shiny_gold = map_find(&nodes, "shiny gold");
 }
 
 bool contain_shiny_gold(Node *node) {
@@ -178,7 +178,7 @@ bool contain_shiny_gold(Node *node) {
 int part1(void) {
     int count = 0;
     for (int i = 0; i < MAP_SIZE; i++) {
-        if (nodes.keys[i][0] != '\0') {
+        if (nodes.keys[i].str[0] != 0) {
             if (contain_shiny_gold(nodes.values[i])) {
                 count++;
             }
@@ -196,8 +196,13 @@ int count_bags(Node *node) {
     return count;
 }
 
-int part2(void) {
-    return count_bags(shiny_gold);
+int part2(void) { return count_bags(shiny_gold); }
+
+void solution(void) {
+    init_tokens();
+    build_graph();
+    printf("%d\n", part1());
+    printf("%d\n", part2());
 }
 
 int main(int argc, char **argv) {
@@ -207,9 +212,6 @@ int main(int argc, char **argv) {
     }
     char *input = read_input(argv[1]);
     buffer = input;
-    init_tokens();
-    build_graph();
-    printf("%d\n", part1());
-    printf("%d\n", part2());
+    solution();
     free(input);
 }

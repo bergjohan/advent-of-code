@@ -26,10 +26,13 @@ uint64_t timer(void) {
 
 #define MAP_SIZE 1024
 
-typedef char Key[32];
+typedef struct String {
+    char str[32];
+    size_t len;
+} String;
 
 typedef struct Map {
-    Key keys[MAP_SIZE];
+    String keys[MAP_SIZE];
     void *values[MAP_SIZE];
 } Map;
 
@@ -44,14 +47,17 @@ uint32_t hash(const char *str, size_t size) {
     return hash;
 }
 
-void map_insert(Map *map, const char *key, size_t size, void *value) {
-    uint32_t i = hash(key, size);
+void map_insert_range(Map *map, const char *start, const char *end,
+                      void *value) {
+    size_t len = (size_t)(end - start);
+    uint32_t i = hash(start, len);
 
     for (;;) {
         i &= MAP_SIZE - 1;
-        if (map->keys[i][0] == 0) {
-            memcpy(map->keys[i], key, size);
-            map->keys[i][size] = '\0';
+        if (map->keys[i].str[0] == 0) {
+            map->keys[i].len = len;
+            memcpy(map->keys[i].str, start, len);
+            map->keys[i].str[len] = 0;
             map->values[i] = value;
             return;
         }
@@ -59,19 +65,28 @@ void map_insert(Map *map, const char *key, size_t size, void *value) {
     }
 }
 
-void *map_find(Map *map, const char *key, size_t size) {
-    uint32_t i = hash(key, size);
+void map_insert(Map *map, const char *key, void *value) {
+    map_insert_range(map, key, key + strlen(key), value);
+}
+
+void *map_find_range(Map *map, const char *start, const char *end) {
+    size_t len = (size_t)(end - start);
+    uint32_t i = hash(start, len);
 
     for (;;) {
         i &= MAP_SIZE - 1;
-        if (strlen(map->keys[i]) == size &&
-            strncmp(key, map->keys[i], size) == 0) {
+        if (map->keys[i].len == len &&
+            strncmp(map->keys[i].str, start, len) == 0) {
             return map->values[i];
-        } else if (strlen(map->keys[i]) == 0) {
+        } else if (map->keys[i].str[0] == 0) {
             return NULL;
         }
         i++;
     }
+}
+
+void *map_find(Map *map, const char *key) {
+    return map_find_range(map, key, key + strlen(key));
 }
 
 char *read_input(const char *filename) {
@@ -87,7 +102,7 @@ char *read_input(const char *filename) {
         die("malloc() failed\n");
     }
     fread(ret, 1, (size_t)size, fp);
-    ret[size] = '\0';
+    ret[size] = 0;
     fclose(fp);
     return ret;
 }

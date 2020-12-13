@@ -14,7 +14,7 @@ typedef enum Token_kind {
 
 typedef struct Token {
     const char *start;
-    size_t len;
+    const char *end;
     Token_kind kind;
 } Token;
 
@@ -96,7 +96,7 @@ next:
         die("invalid token\n");
     }
 
-    token.len = (size_t)(buffer - token.start);
+    token.end = buffer;
 }
 
 void expect(Token_kind kind) {
@@ -147,8 +147,8 @@ int parse(bool (*valid_password)(int, int, char)) {
 
 bool part1(int low, int high, char c) {
     int count = 0;
-    for (size_t i = 0; i < token.len; i++) {
-        if (token.start[i] == c) {
+    for (const char *it = token.start; it != token.end; it++) {
+        if (*it == c) {
             count++;
         }
     }
@@ -159,15 +159,19 @@ bool part2(int i, int j, char c) {
     return (token.start[i - 1] == c) ^ (token.start[j - 1] == c);
 }
 
+void solution(const char *input) {
+    buffer = input;
+    printf("%d\n", parse(part1));
+    buffer = input;
+    printf("%d\n", parse(part2));
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         fprintf(stderr, "Usage: %s [FILE]\n", argv[0]);
         exit(1);
     }
-    char *input = read_input("input02.txt");
-    buffer = input;
-    printf("%d\n", parse(part1));
-    buffer = input;
-    printf("%d\n", parse(part2));
+    char *input = read_input(argv[1]);
+    solution(input);
     free(input);
 }
